@@ -33,6 +33,10 @@ jOpenDialog = class(jControl)
     procedure Show(); overload;
     procedure Show(_initialEnvDirectory: TEnvDirectory; _fileExtension: string); overload;
 
+    procedure setCurrentPath(_path: string);//vr
+    procedure setIsInitDirRoot(_value: boolean);//vr
+    procedure SetInitialDirectory(_path: string);//vr
+
     procedure SetInitialEnvDirectory(_initialEnvDirectory: TEnvDirectory);
     procedure SetFileExtension(_fileExtension: string);
 
@@ -50,7 +54,10 @@ procedure jOpenDialog_Show(env: PJNIEnv; _jopendialog: JObject; _fileExtension: 
 procedure jOpenDialog_Show(env: PJNIEnv; _jopendialog: JObject); overload;
 procedure jOpenDialog_Show(env: PJNIEnv; _jopenfile: JObject; _initialEnvDirectory: integer; _fileExtension: string); overload;
 
-procedure jOpenDialog_SetInitialDirectory(env: PJNIEnv; _jopenfile: JObject; _initialEnvDirectory: integer);
+procedure jOpenDialog_setCurrentPath(env: PJNIEnv; _jopendialog: JObject; _path: string);//vr
+procedure jOpenDialog_setIsInitDirRoot(env: PJNIEnv; _jopendialog: JObject; _value: boolean);//vr
+procedure jOpenDialog_SetInitialDirectory(env: PJNIEnv; _jopendialog: JObject; _path: string); overload; //vr
+procedure jOpenDialog_SetInitialDirectory(env: PJNIEnv; _jopenfile: JObject; _initialEnvDirectory: integer); overload;//vr add overload
 procedure jOpenDialog_SetFileExtension(env: PJNIEnv; _jopenfile: JObject; _fileExtension: string);
 
 implementation
@@ -129,6 +136,27 @@ begin
      jOpenDialog_Show(FjEnv, FjObject, Ord(_initialEnvDirectory) ,_fileExtension);
 end;
 
+procedure jOpenDialog.setCurrentPath(_path: string);//vr
+begin
+  //in designing component state: set value here...
+  if FInitialized then
+     jOpenDialog_setCurrentPath(FjEnv, FjObject, _path);
+end;
+
+procedure jOpenDialog.setIsInitDirRoot(_value: boolean);//vr
+begin
+  //in designing component state: set value here...
+  if FInitialized then
+     jOpenDialog_setIsInitDirRoot(FjEnv, FjObject, _value);
+end;
+
+procedure jOpenDialog.SetInitialDirectory(_path: string);//vr
+begin
+  //in designing component state: set value here...
+  if FInitialized then
+     jOpenDialog_SetInitialDirectory(FjEnv, FjObject, _path);
+end;
+
 procedure jOpenDialog.SetInitialEnvDirectory(_initialEnvDirectory: TEnvDirectory);
 begin
   //in designing component state: set value here...
@@ -139,7 +167,7 @@ end;
 
 procedure jOpenDialog.SetFileExtension(_fileExtension: string);
 var
-  p: integer;
+  //vr p: integer;
   aux: string;
 begin
   //in designing component state: set value here...
@@ -147,11 +175,12 @@ begin
   if FInitialized then
   begin
      aux:= FFileExtension;
-     p:= Pos('.', FFileExtension);
-     if  p > 0 then
-     begin
-       aux:= Copy(aux, p+1, Length(aux));
-     end;
+     //vr >>>
+     //p:= Pos('.', FFileExtension);
+     //if  p > 0 then
+     //begin
+     //  aux:= Copy(aux, p+1, Length(aux));
+     //end;
      if Pos('*', aux) > 0 then  aux:= '';
      jOpenDialog_SetFileExtension(FjEnv, FjObject, aux);
   end;
@@ -239,6 +268,47 @@ begin
   jMethod:= env^.GetMethodID(env, jCls, 'Show', '(ILjava/lang/String;)V');
   env^.CallVoidMethodA(env, _jopenfile, jMethod, @jParams);
 env^.DeleteLocalRef(env,jParams[1].l);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
+procedure jOpenDialog_setCurrentPath(env: PJNIEnv; _jopendialog: JObject; _path: string);//vr
+var
+  jParams: array[0..0] of jValue;
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jParams[0].l:= env^.NewStringUTF(env, PChar(_path));
+  jCls:= env^.GetObjectClass(env, _jopendialog);
+  jMethod:= env^.GetMethodID(env, jCls, 'setCurrentPath', '(Ljava/lang/String;)V');
+  env^.CallVoidMethodA(env, _jopendialog, jMethod, @jParams);
+env^.DeleteLocalRef(env,jParams[0].l);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
+procedure jOpenDialog_setIsInitDirRoot(env: PJNIEnv; _jopendialog: JObject; _value: boolean);//vr
+var
+  jParams: array[0..0] of jValue;
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jParams[0].z:= JBool(_value);
+  jCls:= env^.GetObjectClass(env, _jopendialog);
+  jMethod:= env^.GetMethodID(env, jCls, 'setIsInitDirRoot', '(Z)V');
+  env^.CallVoidMethodA(env, _jopendialog, jMethod, @jParams);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
+procedure jOpenDialog_SetInitialDirectory(env: PJNIEnv; _jopendialog: JObject; _path: string);//vr
+var
+  jParams: array[0..0] of jValue;
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jParams[0].l:= env^.NewStringUTF(env, PChar(_path));
+  jCls:= env^.GetObjectClass(env, _jopendialog);
+  jMethod:= env^.GetMethodID(env, jCls, 'SetInitialDirectory', '(Ljava/lang/String;)V');
+  env^.CallVoidMethodA(env, _jopendialog, jMethod, @jParams);
+env^.DeleteLocalRef(env,jParams[0].l);
   env^.DeleteLocalRef(env, jCls);
 end;
 

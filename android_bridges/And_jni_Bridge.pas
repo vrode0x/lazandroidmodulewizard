@@ -775,6 +775,7 @@ Procedure jWebView_setJavaScript       (env:PJNIEnv;
                                         WebView : jObject; javascript : boolean);
 procedure jWebView_SetZoomControl(env: PJNIEnv; WebView: jObject; ZoomControl: Boolean);
 Procedure jWebView_loadURL(env:PJNIEnv; WebView : jObject; Str : String);
+procedure jWebView_reload(env: PJNIEnv; _jwebview: JObject);//vr
 Procedure jWebView_setId(env:PJNIEnv; WebView : jObject; id: DWord);
 Procedure jWebView_setLParamWidth(env:PJNIEnv; WebView : jObject; w: DWord);
 Procedure jWebView_setLParamHeight(env:PJNIEnv; WebView : jObject; h: DWord);
@@ -794,6 +795,7 @@ procedure jWebView_GoBack(env: PJNIEnv; _jwebview: JObject);
 procedure jWebView_GoBackOrForward(env: PJNIEnv; _jwebview: JObject; steps: integer);
 procedure jWebView_GoForward(env: PJNIEnv; _jwebview: JObject);
 procedure jWebView_ScrollTo(env: PJNIEnv; _jwebview: JObject; _x, _y: integer);
+procedure jWebView_EvaluateJavascript(env: PJNIEnv; _jwebview: JObject; script: string);//vr
 
 function  jWebView_GetScrollY(env: PJNIEnv; _jwebview: JObject): integer;//LMB
 procedure jWebView_FindAll(env: PJNIEnv; _jwebview: JObject; _s: string);//LMB
@@ -8457,6 +8459,17 @@ begin
   env^.DeleteLocalRef(env, cls);
 end;
 
+procedure jWebView_reload(env: PJNIEnv; _jwebview: JObject); //vr >>>
+var
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jCls:= env^.GetObjectClass(env, _jwebview);
+  jMethod:= env^.GetMethodID(env, jCls, 'reload', '()V');
+  env^.CallVoidMethod(env, _jwebview, jMethod);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
 function jWebView_CanGoBack(env: PJNIEnv; _jwebview: JObject): boolean;
 var
   jBoo: JBoolean;
@@ -8673,6 +8686,20 @@ begin
   jCls:= env^.GetObjectClass(env, _jwebview);
   jMethod:= env^.GetMethodID(env, jCls, 'scrollTo', '(II)V');
   env^.CallVoidMethodA(env, _jwebview, jMethod, @jParams);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
+procedure jWebView_EvaluateJavascript(env: PJNIEnv; _jwebview: JObject; script: string);//vr
+var
+  jParams: array[0..0] of jValue;
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jParams[0].l:= env^.NewStringUTF(env, PChar(script));
+  jCls:= env^.GetObjectClass(env, _jwebview);
+  jMethod:= env^.GetMethodID(env, jCls, 'EvaluateJavascript', '(Ljava/lang/String;)V');
+  env^.CallVoidMethodA(env, _jwebview, jMethod, @jParams);
+env^.DeleteLocalRef(env,jParams[0].l);
   env^.DeleteLocalRef(env, jCls);
 end;
 

@@ -8,17 +8,19 @@ unit amw_ide_tools;
 interface
 
 uses
-  amw_ide_menu_items, AndroidProjOptions, ApkBuild, uFormBuildFPCCross, 
-  uFormGetFPCSource, uformsettingspaths, uFormStartEmulator, ufrmCompCreate, 
-  ufrmEditor, uimportcstuff, uimportjavastuff, uimportjavastuffchecked, 
-  uregistercompform, uformimportlamwstuff, unitformimportpicture, 
-  uFormComplements, uformimportjarstuff, lamwtoolsoptions, LazarusPackageIntf;
+  amw_ide_menu_items, AndroidGdb, AndroidProjOptions, ApkBuild, 
+  lamwtoolsoptions, uFormBuildFPCCross, uFormComplements, uFormGetFPCSource, 
+  uformimportjarstuff, uformimportlamwstuff, uformsettingspaths, 
+  uFormStartEmulator, ufrmCompCreate, ufrmEditor, uimportcstuff, 
+  uimportjavastuff, uimportjavastuffchecked, unitformimportpicture, 
+  uregistercompform, LazarusPackageIntf;
 
 implementation
 
 procedure Register;
 begin
   RegisterUnit('amw_ide_menu_items', @amw_ide_menu_items.Register);
+  RegisterUnit('AndroidGdb', @AndroidGdb.Register);
 end;
 
 initialization

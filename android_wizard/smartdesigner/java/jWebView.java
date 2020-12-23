@@ -1,5 +1,6 @@
 package com.example.appdemo1;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -9,6 +10,8 @@ import android.webkit.HttpAuthHandler;
 import android.webkit.WebView;
 import android.webkit.WebView.FindListener; //LMB
 import android.webkit.WebViewClient;
+import android.webkit.JavascriptInterface;
+import android.os.AsyncTask;
 
 //-------------------------------------------------------------------------
 //WebView
@@ -123,6 +126,43 @@ class jWebClient extends WebViewClient {
     }
 
 }
+//vr >>>
+class PostMessageInUIThread extends AsyncTask<String, Void, String> {
+    private  long mPasObj   = 0;
+    private  Controls mControls = null;
+
+    public PostMessageInUIThread(long PasObj, Controls controls) {
+        mPasObj = PasObj;
+        mControls = controls;
+    }
+
+    @Override
+    protected String doInBackground(String... params) {
+        return params[0];
+    }
+
+    @Override
+    protected void onPostExecute(String msg) {
+        mControls.pOnWebViewPostMessage(mPasObj, msg);
+    }
+}
+
+class WebAppInterface {
+    private  long mPasObj   = 0;
+    private  Controls mControls = null;
+
+    WebAppInterface(long PasObj, Controls controls) {
+        mPasObj = PasObj;
+        mControls = controls;
+    }
+
+    //called not in UI thread
+    @JavascriptInterface
+    public void postMessage(String msg) {
+        new PostMessageInUIThread(mPasObj, mControls).execute(msg);
+    }
+}
+//vr <<<
 
 public class jWebView extends WebView {
     //Java-Pascal Interface
@@ -156,7 +196,9 @@ public class jWebView extends WebView {
 
         setWebViewClient(webclient); // Prevent to run External Browser
         this.getSettings().setJavaScriptEnabled(true);
-        
+
+        this.addJavascriptInterface(new WebAppInterface(PasObj, controls), "Android");//vr
+
         onClickListener = new OnLongClickListener() {        	
 		@Override
 		public boolean onLongClick(View arg0) {
@@ -281,6 +323,15 @@ public class jWebView extends WebView {
 
     public void	GoForward(){
     	this.goForward();
+    }
+
+    //vr
+    public void EvaluateJavascript(String script) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+            this.evaluateJavascript(script, null);
+        } else {
+            this.loadUrl("javascript:" + script);
+        }
     }
 
 	//LMB:

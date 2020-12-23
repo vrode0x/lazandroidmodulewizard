@@ -746,6 +746,7 @@ type
 
   TOnWebViewStatus   = Procedure(Sender: TObject; Status : TWebViewStatus;
                                  URL : String; Var CanNavi : Boolean) of object;
+  TOnWebViewPostMessage= Procedure(Sender:TObject; msg:string) of object;//vr
 
   //LMB:
   TOnWebViewFindResult = Procedure(Sender: TObject; findIndex, findCount: integer) of object;
@@ -860,7 +861,7 @@ type
     Procedure SetAppName  (Value : String);
     Procedure SetjClassName(Value : String);
   protected
-    //
+    procedure DoAfterInitialized; virtual;//vr
   public
     Jni           : TEnvJni;
     Path          : TEnvPath;
@@ -887,7 +888,7 @@ type
     function  GetJavaLastId(): integer; // by TR3E
     procedure SetDensityAssets( _value : TDensityAssets ); // by TR3E
 
-    procedure Finish();
+    procedure Finish(); virtual;//vr add virtual
     Procedure Recreate();
     function  GetContext(): jObject;
     function  GetContextTop: integer;
@@ -1186,7 +1187,7 @@ type
     Procedure Close;
     Procedure Refresh;
     procedure ShowMessage(msg: string); overload;
-    procedure ShowMessage(_msg: string; _gravity: TGravity; _timeLength: TShowLength); overload;
+    procedure ShowMessage(_msg: string; _gravity: TGravity; _timeLength: TShowLength = slShort); overload;
     
     function GetDateTime: String;
     function GetBatteryPercent : integer; // BY TR3E
@@ -6663,6 +6664,7 @@ begin
   //Device.PhoneNumber := jSysInfo_DevicePhoneNumber(env, this);
   //Device.ID          := jSysInfo_DeviceID(env, this);
   FInitialized       := True;
+  DoAfterInitialized;//vr
 end;
 
 procedure jApp.CreateForm(InstanceClass: TComponentClass; out Reference);
@@ -6723,6 +6725,11 @@ end;
 procedure jApp.SetjClassName(Value: String);
 begin
   FjClassName:= Value;
+end;
+
+procedure jApp.DoAfterInitialized;
+begin
+
 end;
 
 procedure jApp.Finish();

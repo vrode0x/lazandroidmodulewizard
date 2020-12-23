@@ -1930,6 +1930,7 @@ type
   jWebView = class(jVisualControl)
   private
     FJavaScript : Boolean;
+    FOnPostMessage: TOnWebViewPostMessage;//vr
     //
     FOnStatus   : TOnWebViewStatus;
 
@@ -1955,6 +1956,7 @@ type
     Procedure UpdateLayout(); override;
 
     Procedure Navigate(url: string);
+    Procedure LoadFromAsset(htmlFileName: string);//vr
     Procedure LoadFromHtmlFile(environmentDirectoryPath: string; htmlFileName: string);
     procedure LoadFromHtmlString(_htmlString: string); //thanks to Anton!
 
@@ -1971,6 +1973,7 @@ type
     procedure GoForward();
     procedure ScrollTo(_x, _y: integer);//by MB:
 
+    procedure EvaluateJavascript(script: string);//vr
     //LMB
     function  ScrollY: integer;//LMB
     procedure LoadDataWithBaseURL(s1,s2,s3,s4,s5: string);//LMB
@@ -1991,7 +1994,7 @@ type
     property OnStatus  : TOnWebViewStatus read FOnStatus   write FOnStatus;
     property OnLongClick: TOnNotify read FOnLongClick write FOnLongClick;
     property OnFindResult: TOnWebViewFindResult read FOnFindResult write FOnFindResult;
-
+    property OnPostMessage: TOnWebViewPostMessage read FOnPostMessage write FOnPostMessage;//vr
   end;
 
   jCanvas = class(jControl)
@@ -2344,6 +2347,7 @@ type
 
   // WebView Event
   Function  Java_Event_pOnWebViewStatus          (env: PJNIEnv; this: jobject; WebView : TObject; EventType : integer; URL : jString) : Integer;
+  procedure Java_Event_pOnWebViewPostMessage     (env: PJNIEnv; this: JObject; Sender: TObject; msg: jString);//vr
   //LMB:
   Procedure Java_Event_pOnWebViewFindResultReceived(env: PJNIEnv; this: jobject;
              webview: TObject; findIndex, findCount: integer);
@@ -3665,6 +3669,28 @@ begin
   pasWebView.OnStatus(pasWebView,IntToWebViewStatus(EventType),pasURL,pasCanNavi);
   if not(pasCanNavi) then Result := cjWebView_Act_Break;
 
+end;
+
+procedure Java_Event_pOnWebViewPostMessage(env: PJNIEnv; this: JObject;
+  Sender: TObject; msg: jString); //vr
+var
+  _jBoolean: integer;
+  pasMsg: String;
+begin
+  gApp.Jni.jEnv:= env;
+  gApp.Jni.jThis:= this;
+  if (Sender is jWebView) and
+        Assigned(jWebView(Sender).OnPostMessage) then
+  begin
+   jForm(jWebView(Sender).Owner).UpdateJNI(gApp);
+   pasMsg := '';
+   if msg <> nil then
+   begin
+     _jBoolean := JNI_False;
+     pasMsg    := String( env^.GetStringUTFChars(Env,msg,@_jBoolean) );
+   end;
+   jWebView(Sender).OnPostMessage(Sender, pasMsg);
+  end;
 end;
 
 //LMB:
@@ -9915,20 +9941,23 @@ begin
   // jWebView_RemoveFromViewParent(FjEnv, FjObject);
 end;
 
-Procedure jWebView.SetColor(Value: TARGBColorBridge);
+procedure jWebView.SetColor(Value: TARGBColorBridge);
 begin
   FColor := Value;
   if (FInitialized = True) and (FColor <> colbrDefault) then
      View_SetBackGroundColor(FjEnv, FjObject , GetARGB(FCustomColor, FColor));
 end;
 
-Procedure jWebView.Refresh;
+procedure jWebView.Refresh;
  begin
-  if not FInitialized then Exit;
-  View_Invalidate(FjEnv, FjObject );
+   //vr >>>
+   //if not FInitialized then Exit;
+   //View_Invalidate(FjEnv, FjObject );
+   if FInitialized then //vr >>>
+      jWebView_reload(FjEnv, FjObject);
  end;
 
-Procedure jWebView.SetJavaScript(Value : Boolean);
+procedure jWebView.SetJavaScript(Value: Boolean);
 begin
   FJavaScript:= Value;
   if FInitialized then
@@ -9944,13 +9973,19 @@ begin
   end;
 end;
 
-Procedure jWebView.Navigate(url: string);
+procedure jWebView.Navigate(url: string);
 begin
   if not FInitialized then Exit;
   jWebView_loadURL(FjEnv, FjObject , url);
 end;
 
-Procedure jWebView.LoadFromHtmlFile(environmentDirectoryPath: string; htmlFileName: string);
+procedure jWebView.LoadFromAsset(htmlFileName: string);//vr
+begin
+  Navigate('file:///android_asset/' + htmlFileName);
+end;
+
+procedure jWebView.LoadFromHtmlFile(environmentDirectoryPath: string;
+  htmlFileName: string);
 begin;
    Navigate('file://'+environmentDirectoryPath+'/'+htmlFileName);
 end;
@@ -10004,7 +10039,7 @@ begin
      jWebView_GoForward(FjEnv, FjObject);
 end;
 
-procedure jWebView.ClearLayout();
+procedure jWebView.ClearLayout;
 var
   rToP: TPositionRelativeToParent;
   rToA: TPositionRelativeToAnchorID;
@@ -10056,6 +10091,13 @@ procedure jWebView.ScrollTo(_x, _y: integer);
 begin
   if FInitialized then
      jWebView_ScrollTo(FjEnv, FjObject, _x, _y);
+end;
+
+procedure jWebView.EvaluateJavascript(script: string);//vr
+begin
+  //in designing component state: set value here...
+  if FInitialized then
+     jWebView_EvaluateJavascript(FjEnv, FjObject, script);
 end;
 
 //LMB

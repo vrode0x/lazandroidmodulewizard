@@ -24,11 +24,11 @@ import java.util.Arrays;
 
 // https://rogerkeays.com/simple-android-file-chooser
 public class jOpenDialog /*extends ...*/ {
- 
+
    private long     pascalObj = 0;      // Pascal Object
    private Controls controls  = null;   // Control Class -> Java/Pascal Interface ...
    private Context  context   = null;
-      
+
    private String PARENT_DIR = "..";
    private ListView list;
    private Dialog dialog;
@@ -36,59 +36,60 @@ public class jOpenDialog /*extends ...*/ {
 
    // filter on file extension
    private String extension = null;
-   
+   private  Boolean isInitDirRoot = false;//vr
+
    private File initDir = null;
    private boolean IsShowing = false;
-           
+
  //GUIDELINE: please, preferentially, init all yours params names with "_", ex: int _flag, String _hello ...
-   
+
    public jOpenDialog(Controls _ctrls, long _Self) { //Add more others news "_xxx" params if needed!
       //super(_ctrls.activity);
       context   = _ctrls.activity;
       pascalObj = _Self;
       controls  = _ctrls;
-      
-      dialog = new Dialog(controls.activity);      
+
+      dialog = new Dialog(controls.activity);
       list = new ListView(controls.activity);
-      
+
       initDir = Environment.getExternalStorageDirectory();
-      
+
       list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-          @Override 
+          @Override
           public void onItemClick(AdapterView<?> parent, View view, int which, long id) {
-        	  
+
         	if (IsShowing) {
-              String fileChosen = (String) list.getItemAtPosition(which);             
-              File chosenFile = getChosenFile(fileChosen);              
+              String fileChosen = (String) list.getItemAtPosition(which);
+              File chosenFile = getChosenFile(fileChosen);
               if ( chosenFile.isDirectory() ) {
                  refresh(chosenFile);
-              } else {             	  
-                controls.pOnFileSelected(pascalObj, currentPath.getPath() /*initDir.getPath()*/, chosenFile.getName());                          
+              } else {
+                controls.pOnFileSelected(pascalObj, currentPath.getPath() /*initDir.getPath()*/, chosenFile.getName());
                 dialog.dismiss();
-              }              
+              }
         	}
-        	
+
           }
       });
-            
+
    }
- 
+
    public void jFree() {
      //free local objects...
 	   dialog = null;
-	   list = null;	   
+	   list = null;
    }
- 
+
  //write others [public] methods code here......
  //GUIDELINE: please, preferentially, init all yours params names with "_", ex: int _flag, String _hello ...
-   
-   private File GetEnvironmentDirectoryPath(int _directory) {		
+
+   private File GetEnvironmentDirectoryPath(int _directory) {
 		File filePath= null;
 		String absPath;
 		//Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);break; //only Api 19!
-		if (_directory != 8) {		  	   	 
-		  switch(_directory) {	                       
-		    case 0:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); break;	   
+		if (_directory != 8) {
+		  switch(_directory) {
+		    case 0:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); break;
 		    case 1:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM); break;
 		    case 2:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC); break;
 		    case 3:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES); break;
@@ -96,8 +97,8 @@ public class jOpenDialog /*extends ...*/ {
 		    case 5:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES); break;
 		    case 6:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS); break;
 		    case 7:  filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES); break;
-		    
-		    case 9: filePath  = this.controls.activity.getFilesDir(); break;      //Result : /data/data/com/MyApp/files	    	    
+
+		    case 9: filePath  = this.controls.activity.getFilesDir(); break;      //Result : /data/data/com/MyApp/files
 		    //case 10: filePath  = this.controls.activity.getFilesDir(); break;      //TODO		//databases
               case 10: absPath = this.controls.activity.getFilesDir().getPath();
                   absPath = absPath.substring(0, absPath.lastIndexOf("/")) + "/databases";
@@ -107,54 +108,73 @@ public class jOpenDialog /*extends ...*/ {
                   absPath = absPath.substring(0, absPath.lastIndexOf("/")) + "/shared_prefs";
                   filePath= new File(absPath);break;
               case 12: filePath = this.controls.activity.getCacheDir();break;
-		  }		  	  	     
-		}else {  //== 8 
+		  }
+		}else {  //== 8
 		    if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) == true) {
-		    	filePath = Environment.getExternalStorageDirectory();  //sdcard!				   	 
+		    	filePath = Environment.getExternalStorageDirectory();  //sdcard!
 		    }
-		}    			    		 
+		}
 		return filePath;
 	}
-   
+
    public void SetInitialDirectory (int _initialEnvDirectory) {
 	   initDir = GetEnvironmentDirectoryPath(_initialEnvDirectory);
    }
-   
+
+   //vr >>>
+   public void SetInitialDirectory (String _path) {
+	     File file = new File(_path);
+       if ((file != null) && file.exists() && file.isDirectory())
+           initDir = file;
+   }
+
+   //vr >>>
+   public void setCurrentPath(String _path) {
+       File file = new File(_path);
+       if ((file != null) && file.exists() && file.isDirectory())
+           currentPath = file;
+   }
+
+   //vr >>>
+   public void setIsInitDirRoot(boolean _value) {
+       isInitDirRoot = _value;
+   }
+
    public void SetFileExtension(String _fileExtension) {
 	   extension = _fileExtension;
-	   if (extension != null) {   
-	     if ( extension.equals("") )          
-		   extension = null;	   		 
+	   if (extension != null) {
+	     if ( extension.equals("") )
+		   extension = null;
+	     else extension = ';' + extension + ';';//vr
        }
    }
-   
-   public void Show(int _initialEnvDirectory, String _fileExtension) {			  
-	  SetFileExtension( _fileExtension);  
-	  SetInitialDirectory(_initialEnvDirectory);	  
-	  refresh(initDir);  
+
+   public void Show(int _initialEnvDirectory, String _fileExtension) {
+	  SetFileExtension( _fileExtension);
+	  SetInitialDirectory(_initialEnvDirectory);
+	  refresh(initDir);
       dialog.setContentView(list);
       //dialog.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
       IsShowing = true;
-      dialog.show();      
-   }
-   
-   public void Show(String _fileExtension) {			  
-	  SetFileExtension( _fileExtension); 
-	  refresh(initDir); 	  	   
-      dialog.setContentView(list);
-      //dialog.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);      
-      IsShowing = true;	  
       dialog.show();
    }
-   
-   public void Show() {	   
-	   refresh(initDir);  //new File( startDir );	   
+
+   public void Show(String _fileExtension) {
+	  SetFileExtension( _fileExtension);
+	  refresh((currentPath == null) ? initDir : currentPath);
+      dialog.setContentView(list);
+      //dialog.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+      IsShowing = true;
+      dialog.show();
+   }
+
+   public void Show() {
+     refresh((currentPath == null) ? initDir : currentPath);  //new File( startDir );
 	   dialog.setContentView(list);
 	   //dialog.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 	   IsShowing = true;
        dialog.show();
-   }   
-   
+   }
 
    /**
     * Sort, filter and display the files for the given path.
@@ -176,7 +196,14 @@ public class jOpenDialog /*extends ...*/ {
                        } else if (extension == null) {
                            return true;
                        } else {
-                           return file.getName().toLowerCase().endsWith(extension);
+                           //vr return file.getName().toLowerCase().endsWith(extension);
+                           String name = file.getName().toLowerCase();
+                           int i = name.lastIndexOf('.');
+                           if (i == -1) return false;
+                           else {
+                               String ext = ";" + name.substring(i) + ";";
+                               return (extension.indexOf(ext) != -1);
+                           }
                        }
                    } else {
                        return false;
@@ -187,7 +214,11 @@ public class jOpenDialog /*extends ...*/ {
            //convert to an array
            int i = 0;
            String[] fileList;
-           if (path.getParentFile() == null) {
+           if (dirs == null) dirs = new File[0];//vr if no permission then ==null
+           if (files == null) files = new File[0];//vr
+           //vr if (path.getParentFile() == null) {
+           if ((path.getParentFile() == null) ||
+                   (isInitDirRoot && initDir.equals(currentPath))) {
                fileList = new String[dirs.length + files.length];
            } else {
                fileList = new String[dirs.length + files.length + 1];
@@ -200,7 +231,7 @@ public class jOpenDialog /*extends ...*/ {
 
            // refresh the user interface
            dialog.setTitle(currentPath.getPath());
-           
+
            list.setAdapter(new ArrayAdapter<String>(controls.activity, android.R.layout.simple_list_item_1, fileList) {
                       @Override public View getView(int pos, View view, ViewGroup parent) {
                           view = super.getView(pos, view, parent);
@@ -208,10 +239,10 @@ public class jOpenDialog /*extends ...*/ {
                           return view;
                       }
                   });
-       }   
-       
+       }
+
    }
-      
+
    /**
     * Convert a relative filename into an actual File object.
     */
@@ -222,5 +253,7 @@ public class jOpenDialog /*extends ...*/ {
            return new File(currentPath, fileChosen);
        }
    }
-   
+
 }
+
+
